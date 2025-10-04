@@ -13,13 +13,14 @@ import { RefreshTokenDto } from '../dto/refresh-token.dto.js';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard.js';
 import { Permissions } from '@common/decorators/permissions.decorator.js';
 import { RbacGuard } from '@common/guards/rbac.guard.js';
+import { AuthLoginDto } from '../../application/dto/auth-login.dto.js';
 
 @Controller('auth')
 export class AuthController {
  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() dto: LoginDto) {
+  async login(@Body() dto: LoginDto): Promise<AuthLoginDto> {
     return this.authService.login(dto.email.toLowerCase(), dto.password);
   }
 

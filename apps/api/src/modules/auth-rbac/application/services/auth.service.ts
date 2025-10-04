@@ -3,6 +3,7 @@ import type { AuthProfileDto, ModuleSummaryDto } from '@mvp/shared';
 import { UsersRepositoryPort } from '../ports/users.repository-port.js';
 import { TokenServicePort } from '../ports/token.service-port.js';
 import { AuthTokensDto } from '../dto/auth-tokens.dto.js';
+import { AuthLoginDto } from '../dto/auth-login.dto.js';
 import { PermissionsServicePort } from '../ports/permissions.service-port.js';
 import { RolesRepositoryPort } from '../ports/roles.repository-port.js';
 import { verify as argon2Verify } from '@node-rs/argon2';
@@ -30,7 +31,7 @@ export class AuthService {
     private readonly modulesRepository: ModulesRepositoryPort,
   ) {}
 
-  async login(email: string, password: string): Promise<AuthTokensDto> {
+  async login(email: string, password: string): Promise<AuthLoginDto> {
     const user = await this.usersRepository.findByEmailAcrossCompanies(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -46,12 +47,21 @@ export class AuthService {
       companyId: user.companyId,
       email: user.email,
     };
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken, refreshToken, permissions, roles] = await Promise.all([
       this.tokenService.generateAccessToken(payload),
       this.tokenService.generateRefreshToken(payload),
+      this.permissionsService.getUserPermissions(user.companyId, user.id),
+      this.rolesRepository.getUserRoles(user.companyId, user.id),
     ]);
 
-    return new AuthTokensDto(accessToken, refreshToken);
+    return new AuthLoginDto(accessToken, refreshToken, {
+      userId: user.id,
+      companyId: user.companyId,
+      email: user.email,
+      name: user.name,
+      permissions,
+      roles,
+    });
   }
 
   async refresh(userId: string, companyId: string, token: string): Promise<AuthTokensDto> {
@@ -84,10 +94,10 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const permissions = await this.permissionsService.getUserPermissions(
-      companyId,
-      userId,
-    );
+    const [permissions, roles] = await Promise.all([
+      this.permissionsService.getUserPermissions(companyId, userId),
+      this.rolesRepository.getUserRoles(companyId, userId),
+    ]);
 
     return {
       userId: user.id,
@@ -95,6 +105,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       permissions,
+      roles,
     };
   }
 

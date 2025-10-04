@@ -67,6 +67,19 @@ export class RolesRepository implements RolesRepositoryPort {
     });
   }
 
+  async getUserRoles(companyId: string, userId: string): Promise<string[]> {
+    const userRoles = await this.userRolesRepository.find({
+      where: { companyId, userId },
+      relations: ['role'],
+    });
+
+    if (userRoles.length === 0) {
+      return [];
+    }
+
+    return userRoles.map((userRole) => userRole.role?.name ?? userRole.roleId);
+  }
+
   async listCompanyRoles(companyId: string) {
     const roles = await this.rolesRepository.find({ where: { companyId } });
     return roles.map((role) => ({

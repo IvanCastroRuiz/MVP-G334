@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type {
-  AuthProfileDto,
+  AuthLoginDto,
   BoardSummaryDto,
   ModuleSummaryDto,
 } from '@mvp/shared';
@@ -21,16 +21,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post<AuthLoginDto>('/auth/login', { email, password });
       setTokens(response.data.accessToken, response.data.refreshToken);
+      setUser(response.data.user);
 
-      const [profileResponse, modulesResponse, boardsResponse] = await Promise.all([
-        api.get('/auth/me'),
+      const [modulesResponse, boardsResponse] = await Promise.all([
         api.get('/auth/me/modules'),
         api.get('/kanban/boards'),
       ]);
-
-      setUser(profileResponse.data as AuthProfileDto);
       const modules = modulesResponse.data as ModuleSummaryDto[];
       setModules(modules);
 
