@@ -28,19 +28,24 @@ export class ModulesRepository implements ModulesRepositoryPort {
         { key: In(moduleKeys), companyId },
       ],
     });
-    return modules.map(
-      (module) =>
-        new ModuleEntity(
-          module.id,
-          module.companyId,
-          module.key,
-          module.name,
-          module.visibility,
-          module.isActive,
-          module.createdAt,
-          module.updatedAt,
-        ),
-    );
+    const toModuleEntity = (
+      module: ModuleOrmEntity & { children?: ModuleOrmEntity[] },
+    ): ModuleEntity =>
+      new ModuleEntity(
+        module.id,
+        module.companyId,
+        module.key,
+        module.name,
+        module.visibility,
+        module.isActive,
+        module.createdAt,
+        module.updatedAt,
+        Array.isArray(module.children)
+          ? module.children.map((child) => toModuleEntity(child as any))
+          : [],
+      );
+
+    return modules.map((module) => toModuleEntity(module));
   }
 
   async ensureSeedData(): Promise<void> {

@@ -15,6 +15,7 @@ import {
   USERS_REPOSITORY,
 } from '../ports/port.tokens.js';
 import { ModulesRepositoryPort } from '../ports/modules.repository-port.js';
+import { ModuleEntity } from '../../domain/entities/module.entity.js';
 
 @Injectable()
 export class AuthService {
@@ -125,12 +126,17 @@ export class AuthService {
       companyId,
       permissions,
     );
-    return modules.map((module) => ({
+    const toDto = (module: ModuleEntity): ModuleSummaryDto => ({
       id: module.id,
       key: module.key,
       name: module.name,
       visibility: module.visibility,
       isActive: module.isActive,
-    }));
+      ...(module.children.length > 0
+        ? { children: module.children.map((child) => toDto(child)) }
+        : {}),
+    });
+
+    return modules.map((module) => toDto(module));
   }
 }
