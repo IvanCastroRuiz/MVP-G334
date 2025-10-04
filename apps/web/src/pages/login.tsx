@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type {
   AuthLoginDto,
@@ -25,21 +25,44 @@ export default function LoginPage() {
       setTokens(response.data.accessToken, response.data.refreshToken);
       setUser(response.data.user);
 
-      const [modulesResponse, boardsResponse] = await Promise.all([
-        api.get('/auth/me/modules'),
-        api.get('/kanban/boards'),
-      ]);
+      const modulesResponse = await api.get('/auth/me/modules');
       const modules = modulesResponse.data as ModuleSummaryDto[];
       setModules(modules);
 
-      const boards = boardsResponse.data as BoardSummaryDto[];
-      if (boards.length > 0) {
-        navigate(`/board/${boards[0].id}`);
-      } else {
-        navigate('/board');
+      const accessibleModules = modules.filter((module) => module.isActive);
+      const hasBoardsAccess = response.data.user.permissions.includes('boards:read');
+      const includesBoardsModule = modules.some((module) => module.key === 'boards');
+
+      let targetRoute: string | null = null;
+
+      if (hasBoardsAccess && includesBoardsModule) {
+        try {
+          const boardsResponse = await api.get('/kanban/boards');
+          const boards = boardsResponse.data as BoardSummaryDto[];
+          targetRoute = boards.length > 0 ? `/board/${boards[0].id}` : '/board';
+        } catch {
+          targetRoute = '/board';
+        }
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Invalid credentials');
+
+      if (!targetRoute) {
+        const firstModule = accessibleModules.find((module) => module.key !== 'boards') ?? accessibleModules[0];
+        if (firstModule) {
+          targetRoute = firstModule.key === 'boards' ? '/board' : `/${firstModule.key}`;
+        }
+      }
+
+      navigate(targetRoute ?? '/board');
+    } catch (err: unknown) {
+      const apiMessage =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
+          'string'
+          ? (err as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : null;
+      setError(apiMessage ?? 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +83,9 @@ export default function LoginPage() {
             <input
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setEmail(event.target.value)
+              }
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:border-sky-500 focus:outline-none"
             />
           </div>
@@ -69,7 +94,9 @@ export default function LoginPage() {
             <input
               type="password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setPassword(event.target.value)
+              }
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:border-sky-500 focus:outline-none"
             />
           </div>
