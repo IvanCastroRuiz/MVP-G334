@@ -1,0 +1,49 @@
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  Inject,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { PERMISSIONS_METADATA_KEY } from '../decorators/permissions.decorator.js';
+import { PermissionsServicePort } from '@modules/auth-rbac/application/ports/permissions.service-port.js';
+import { PERMISSIONS_SERVICE } from '@modules/auth-rbac/application/ports/port.tokens.js';
+
+@Injectable()
+export class RbacGuard implements CanActivate {
+  constructor(
+    private readonly reflector: Reflector,
+    @Inject(PERMISSIONS_SERVICE)
+    private readonly permissionsService: PermissionsServicePort,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+      PERMISSIONS_METADATA_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true;
+    }
+
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    if (!user) {
+      throw new ForbiddenException('User not found in request');
+    }
+
+    const hasPermissions = await this.permissionsService.userHasPermissions(
+      user.companyId,
+      user.userId,
+      requiredPermissions,
+    );
+
+    if (!hasPermissions) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    return true;
+  }
+}

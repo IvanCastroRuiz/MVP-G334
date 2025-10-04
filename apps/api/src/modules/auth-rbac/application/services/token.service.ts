@@ -1,0 +1,126 @@
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { TokenServicePort } from '../ports/token.service-port.js';
+import { RefreshTokensRepositoryPort } from '../ports/refresh-tokens.repository-port.js';
+import * as argon2 from 'argon2';
+import { REFRESH_TOKENS_REPOSITORY } from '../ports/port.tokens.js';
+
+@Injectable()
+export class TokenService implements TokenServicePort {
+  private readonly accessTtl: string;
+  private readonly refreshTtl: string;
+
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    @Inject(REFRESH_TOKENS_REPOSITORY)
+    private readonly refreshTokensRepository: RefreshTokensRepositoryPort,
+  ) {
+    this.accessTtl = this.configService.get<string>('JWT_ACCESS_TTL', '900s');
+    this.refreshTtl = this.configService.get<string>('JWT_REFRESH_TTL', '30d');
+  }
+
+  async generateAccessToken(payload: Record<string, unknown>): Promise<string> {
+    return this.jwtService.signAsync(payload, {
+      expiresIn: this.accessTtl,
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+    });
+  }
+
+  async generateRefreshToken(payload: Record<string, unknown>): Promise<string> {
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.refreshTtl,
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+    });
+
+    const expiresAt = new Date(Date.now() + this.parseDurationToMs(this.refreshTtl));
+    const tokenHash = await argon2.hash(refreshToken);
+
+    await this.refreshTokensRepository.createToken(
+      String(payload.sub),
+      tokenHash,
+      expiresAt,
+    );
+
+    return refreshToken;
+  }
+
+  async verifyRefreshToken(token: string): Promise<Record<string, unknown>> {
+    try {
+      return await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  async revokeRefreshToken(userId: string, token: string): Promise<void> {
+    const tokenHash = await this.findMatchingTokenHash(userId, token);
+    if (!tokenHash) {
+      return;
+    }
+    await this.refreshTokensRepository.revokeToken(userId, tokenHash);
+  }
+
+  async rotateRefreshToken(userId: string, token: string): Promise<string> {
+    const tokenHash = await this.findMatchingTokenHash(userId, token);
+    if (!tokenHash) {
+      throw new UnauthorizedException('Refresh token not recognized');
+    }
+
+    const payload = await this.verifyRefreshToken(token);
+    const newToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.refreshTtl,
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+    });
+    const newHash = await argon2.hash(newToken);
+    const expiresAt = new Date(Date.now() + this.parseDurationToMs(this.refreshTtl));
+    await this.refreshTokensRepository.replaceToken(
+      userId,
+      tokenHash,
+      newHash,
+      expiresAt,
+    );
+
+    return newToken;
+  }
+
+  private async findMatchingTokenHash(
+    userId: string,
+    token: string,
+  ): Promise<string | null> {
+    const tokens = await this.refreshTokensRepository.findTokenByUser(userId);
+    for (const candidate of tokens) {
+      const matches = await argon2.verify(candidate.tokenHash, token).catch(
+        () => false,
+      );
+      if (matches) {
+        return candidate.tokenHash;
+      }
+    }
+    return null;
+  }
+
+  private parseDurationToMs(duration: string): number {
+    const match = duration.match(/^(\d+)([smhd])$/);
+    if (!match) {
+      return 0;
+    }
+    const value = Number(match[1]);
+    const unit = match[2];
+    switch (unit) {
+      case 's':
+        return value * 1000;
+      case 'm':
+        return value * 60 * 1000;
+      case 'h':
+        return value * 60 * 60 * 1000;
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      default:
+        return 0;
+    }
+  }
+}
