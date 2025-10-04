@@ -81,6 +81,27 @@ export async function runSeed() {
       isActive: true,
       parentKey: 'tasks',
     },
+    {
+      key: 'hr',
+      name: 'Human Resources',
+      visibility: 'public',
+      isActive: true,
+      parentKey: null,
+    },
+    {
+      key: 'hr-employees',
+      name: 'Employees',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'hr',
+    },
+    {
+      key: 'hr-leaves',
+      name: 'Leave Management',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'hr',
+    },
   ];
 
   const moduleMap = new Map<string, ModuleOrmEntity>();
@@ -114,6 +135,15 @@ export async function runSeed() {
     boards: ['read'],
     tasks: ['create', 'read', 'update', 'move', 'delete', 'comment'],
     comments: ['create', 'read'],
+    hr: [
+      'employees.read',
+      'employees.create',
+      'employees.update',
+      'employees.terminate',
+      'leaves.read',
+      'leaves.request',
+      'leaves.manage',
+    ],
   };
 
   const permissionMap = new Map<string, PermissionOrmEntity>();
@@ -151,6 +181,13 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
+        'hr:employees.read',
+        'hr:employees.create',
+        'hr:employees.update',
+        'hr:employees.terminate',
+        'hr:leaves.read',
+        'hr:leaves.request',
+        'hr:leaves.manage',
       ],
     },
     {
@@ -166,6 +203,13 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
+        'hr:employees.read',
+        'hr:employees.create',
+        'hr:employees.update',
+        'hr:employees.terminate',
+        'hr:leaves.read',
+        'hr:leaves.request',
+        'hr:leaves.manage',
       ],
     },
     {
@@ -195,6 +239,23 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
+      ],
+    },
+    {
+      name: 'HR Manager',
+      description: 'Manage employees and leave requests',
+      permissions: [
+        'projects:read',
+        'boards:read',
+        'tasks:read',
+        'comments:read',
+        'hr:employees.read',
+        'hr:employees.create',
+        'hr:employees.update',
+        'hr:employees.terminate',
+        'hr:leaves.read',
+        'hr:leaves.request',
+        'hr:leaves.manage',
       ],
     },
     {
