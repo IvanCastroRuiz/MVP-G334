@@ -30,7 +30,12 @@ export default function LoginPage() {
         api.get('/kanban/boards'),
       ]);
       const modules = modulesResponse.data as ModuleSummaryDto[];
-      setModules(modules);
+      const normalizeModules = (moduleList: ModuleSummaryDto[]): ModuleSummaryDto[] =>
+        moduleList.map((module) => ({
+          ...module,
+          children: module.children ? normalizeModules(module.children) : undefined,
+        }));
+      setModules(normalizeModules(modules));
 
       const boards = boardsResponse.data as BoardSummaryDto[];
       if (boards.length > 0) {
