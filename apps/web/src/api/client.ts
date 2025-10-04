@@ -1,15 +1,29 @@
-import axios from 'axios';
+import axios, {
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+  type AxiosRequestHeaders,
+} from 'axios';
 import { useAuthStore } from '../store/auth-store';
+
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1',
 });
 
-api.interceptors.request.use((config) => {
+function ensureHeaders(config: RetriableRequestConfig): AxiosRequestHeaders {
+  if (!config.headers) {
+    config.headers = {} as AxiosRequestHeaders;
+  }
+  return config.headers as AxiosRequestHeaders;
+}
+
+api.interceptors.request.use((config: RetriableRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
+    const headers = ensureHeaders(config);
+    headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -27,9 +41,9 @@ function onRefreshed(token: string) {
 }
 
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = (error.config ?? {}) as RetriableRequestConfig;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const { refreshToken, setTokens, clear } = useAuthStore.getState();
@@ -40,7 +54,8 @@ api.interceptors.response.use(
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+            const headers = ensureHeaders(originalRequest);
+            headers.Authorization = `Bearer ${token}`;
             resolve(api(originalRequest));
           });
         });
@@ -59,7 +74,8 @@ api.interceptors.response.use(
         const { accessToken: newAccess, refreshToken: newRefresh } = response.data;
         setTokens(newAccess, newRefresh);
         onRefreshed(newAccess);
-        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+        const headers = ensureHeaders(originalRequest);
+        headers.Authorization = `Bearer ${newAccess}`;
         return api(originalRequest);
       } catch (refreshError) {
         clear();

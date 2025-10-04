@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { BoardDetailsDto, BoardSummaryDto } from '@mvp/shared';
+import type {
+  BoardDetailsDto,
+  BoardSummaryDto,
+  BoardColumnDto,
+  TaskDto,
+  TaskCommentDto,
+} from '@mvp/shared';
 import api from '../api/client';
 import { useAuthStore } from '../store/auth-store';
 
@@ -14,7 +20,7 @@ export default function KanbanBoardPage() {
   const canMoveTasks = user?.permissions.includes('tasks:move');
   const canComment = user?.permissions.includes('tasks:comment');
 
-  const boardsQuery = useQuery({
+  const boardsQuery = useQuery<BoardSummaryDto[]>({
     queryKey: ['boards'],
     queryFn: async () => {
       const response = await api.get('/kanban/boards');
@@ -38,7 +44,7 @@ export default function KanbanBoardPage() {
     }
   }, [boardId, effectiveBoardId, navigate]);
 
-  const boardQuery = useQuery({
+  const boardQuery = useQuery<BoardDetailsDto>({
     queryKey: ['board', effectiveBoardId],
     queryFn: async () => {
       const response = await api.get(`/kanban/boards/${effectiveBoardId}`);
@@ -157,7 +163,7 @@ export default function KanbanBoardPage() {
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none"
             >
               <option value="">Select column</option>
-              {board.columns.map((column) => (
+              {board.columns.map((column: BoardColumnDto) => (
                 <option key={column.id} value={column.id}>
                   {column.name}
                 </option>
@@ -175,8 +181,10 @@ export default function KanbanBoardPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        {board.columns.map((column) => {
-          const tasksInColumn = board.tasks.filter((task) => task.boardColumnId === column.id);
+        {board.columns.map((column: BoardColumnDto) => {
+          const tasksInColumn = board.tasks.filter(
+            (task: TaskDto) => task.boardColumnId === column.id,
+          );
           return (
             <div
               key={column.id}
@@ -188,7 +196,7 @@ export default function KanbanBoardPage() {
                 {column.name}
               </div>
               <div className="flex flex-1 flex-col gap-3 p-4">
-                {tasksInColumn.map((task) => (
+                {tasksInColumn.map((task: TaskDto) => (
                   <div
                     key={task.id}
                     draggable={canMoveTasks}
@@ -229,7 +237,7 @@ export default function KanbanBoardPage() {
                       </div>
                     )}
                     <div className="mt-2 space-y-1 text-xs text-slate-400">
-                      {task.comments.slice(-2).map((comment) => (
+                      {task.comments.slice(-2).map((comment: TaskCommentDto) => (
                         <div key={comment.id} className="rounded bg-slate-800/60 px-2 py-1">
                           {comment.content}
                         </div>

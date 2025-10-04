@@ -155,4 +155,86 @@ describe('API E2E', () => {
       .send({ boardColumnId: destinationColumn.id })
       .expect(201);
   });
+
+  it('manages the HR employee lifecycle and leave approvals', async () => {
+    const loginResponse = await request(httpServer)
+      .post('/api/v1/auth/login')
+      .send({ email: 'devadmin@example.com', password: 'DevAdmin123!' })
+      .expect(201);
+
+    const token = loginResponse.body.accessToken;
+    const uniqueSuffix = Date.now();
+
+    const createEmployeeResponse = await request(httpServer)
+      .post('/api/v1/hr/employees')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        firstName: 'HR',
+        lastName: `Spec ${uniqueSuffix}`,
+        email: `hr-${uniqueSuffix}@example.com`,
+        department: 'People',
+        position: 'Generalist',
+        hireDate: new Date('2024-01-15').toISOString(),
+      })
+      .expect(201);
+
+    const employeeId: string = createEmployeeResponse.body.id;
+    expect(employeeId).toBeDefined();
+    expect(createEmployeeResponse.body.status).toBe('hired');
+
+    const createLeaveResponse = await request(httpServer)
+      .post('/api/v1/hr/leaves')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        employeeId,
+        type: 'vacation',
+        startDate: new Date('2024-02-01').toISOString(),
+        endDate: new Date('2024-02-05').toISOString(),
+        reason: 'Time off',
+      })
+      .expect(201);
+
+    const leaveId: string = createLeaveResponse.body.id;
+    expect(leaveId).toBeDefined();
+    expect(createLeaveResponse.body.status).toBe('pending');
+
+    const approveResponse = await request(httpServer)
+      .patch(`/api/v1/hr/leaves/${leaveId}/approve`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ notes: 'Enjoy!' })
+      .expect(200);
+
+    expect(approveResponse.body.status).toBe('approved');
+
+    const terminationDate = new Date('2024-03-15').toISOString();
+    const terminateResponse = await request(httpServer)
+      .post(`/api/v1/hr/employees/${employeeId}/terminate`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ terminationDate, reason: 'Resignation' })
+      .expect(201);
+
+    expect(terminateResponse.body.status).toBe('terminated');
+    expect(terminateResponse.body.terminationDate).toBe(terminationDate);
+
+    const reactivateResponse = await request(httpServer)
+      .post(`/api/v1/hr/employees/${employeeId}/reactivate`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ hireDate: new Date('2024-04-01').toISOString(), notes: 'Rehire' })
+      .expect(201);
+
+    expect(reactivateResponse.body.status).toBe('hired');
+    expect(reactivateResponse.body.terminationDate).toBeNull();
+
+    const leavesList = await request(httpServer)
+      .get('/api/v1/hr/leaves')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const createdLeave = leavesList.body.find(
+      (leave: { id: string }) => leave.id === leaveId,
+    );
+
+    expect(createdLeave).toBeDefined();
+    expect(createdLeave.status).toBe('approved');
+  });
 });
