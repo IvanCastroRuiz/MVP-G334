@@ -1,8 +1,10 @@
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
+import type { ModuleSummaryDto } from '@mvp/shared';
 import { useAuthStore } from './store/auth-store';
 import LoginPage from './pages/login';
 import KanbanBoardPage from './pages/kanban-board';
+import HrDashboardPage from './pages/hr';
 import { ProtectedRoute } from './components/protected-route';
 
 function AppLayout() {
@@ -10,13 +12,13 @@ function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const visibleModules = useMemo(() => {
+  const visibleModules = useMemo<ModuleSummaryDto[]>(() => {
     if (!user) {
       return [];
     }
     const hasRbacAccess = user.permissions.includes('rbac:read');
     return modules.filter(
-      (module) =>
+      (module: ModuleSummaryDto) =>
         module.isActive &&
         (module.visibility === 'public' ||
           (module.visibility === 'dev_only' && hasRbacAccess)),
@@ -52,7 +54,7 @@ function AppLayout() {
             <p className="text-sm text-slate-400">{user?.name}</p>
           </div>
           <nav className="mt-6 space-y-2">
-            {visibleModules.map((module) => (
+            {visibleModules.map((module: ModuleSummaryDto) => (
               <button
                 key={module.id}
                 onClick={() => navigate(module.key === 'boards' ? '/board' : `/${module.key}`)}
@@ -81,6 +83,7 @@ function AppLayout() {
         <Routes>
           <Route path="/board" element={<KanbanBoardPage />} />
           <Route path="/board/:boardId" element={<KanbanBoardPage />} />
+          <Route path="/hr" element={<HrDashboardPage />} />
           <Route path="*" element={<Navigate to="/board" replace />} />
         </Routes>
       </main>
