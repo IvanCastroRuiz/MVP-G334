@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseOrmEntity } from './base.entity.js';
 import { PermissionOrmEntity } from './permission.orm-entity.js';
 
@@ -6,6 +6,18 @@ import { PermissionOrmEntity } from './permission.orm-entity.js';
 export class ModuleOrmEntity extends BaseOrmEntity {
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId!: string | null;
+
+  @Column({ name: 'parent_id', type: 'uuid', nullable: true })
+  parentId!: string | null;
+
+  @ManyToOne(() => ModuleOrmEntity, (module) => module.children, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parent_id' })
+  parent?: ModuleOrmEntity | null;
+
+  @OneToMany(() => ModuleOrmEntity, (module) => module.parent)
+  children?: ModuleOrmEntity[];
 
   @Column({ type: 'text', unique: true })
   key!: string;

@@ -1,5 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AuthProfileDto, ModuleSummaryDto } from '@mvp/shared';
+import { ModuleEntity } from '../../domain/entities/module.entity.js';
 import { UsersRepositoryPort } from '../ports/users.repository-port.js';
 import { TokenServicePort } from '../ports/token.service-port.js';
 import { AuthTokensDto } from '../dto/auth-tokens.dto.js';
@@ -126,17 +127,17 @@ export class AuthService {
       companyId,
       permissions,
     );
-    const toDto = (module: ModuleEntity): ModuleSummaryDto => ({
+    const serialize = (module: ModuleEntity): ModuleSummaryDto => ({
       id: module.id,
       key: module.key,
       name: module.name,
       visibility: module.visibility,
       isActive: module.isActive,
-      ...(module.children.length > 0
-        ? { children: module.children.map((child) => toDto(child)) }
-        : {}),
+      children:
+        module.children && module.children.length > 0
+          ? module.children.map(serialize)
+          : undefined,
     });
-
-    return modules.map((module) => toDto(module));
+    return modules.map(serialize);
   }
 }

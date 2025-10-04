@@ -2,6 +2,7 @@ export class ModuleEntity {
   constructor(
     public readonly id: string,
     public readonly companyId: string | null,
+    public readonly parentId: string | null,
     public readonly key: string,
     public readonly name: string,
     public readonly visibility: 'public' | 'dev_only',
