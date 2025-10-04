@@ -16,7 +16,6 @@ import {
   USERS_REPOSITORY,
 } from '../ports/port.tokens.js';
 import { ModulesRepositoryPort } from '../ports/modules.repository-port.js';
-import { ModuleEntity } from '../../domain/entities/module.entity.js';
 
 @Injectable()
 export class AuthService {
