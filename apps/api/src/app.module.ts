@@ -1,9 +1,14 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { AuthRbacModule } from './modules/auth-rbac/auth-rbac.module.js';
 import { CrmModule } from './modules/crm/crm.module.js';
 import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 @Module({
   imports: [
@@ -23,6 +28,7 @@ import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware.j
         database: config.get('DATABASE_NAME'),
         autoLoadEntities: true,
         synchronize: false,
+        migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
       }),
     }),
     AuthRbacModule,
