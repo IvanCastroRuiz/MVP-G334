@@ -84,6 +84,7 @@ import {
     PERMISSIONS_SERVICE,
     MODULES_REPOSITORY,
     AUDIT_LOG_REPOSITORY,
+    ROLES_REPOSITORY,
   ],
 })
 export class AuthRbacModule {}

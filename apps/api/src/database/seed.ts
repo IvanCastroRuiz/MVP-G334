@@ -11,6 +11,9 @@ import { ProjectOrmEntity } from '../modules/crm/projects/infra/project.orm-enti
 import { BoardOrmEntity } from '../modules/crm/boards/infra/board.orm-entity.js';
 import { BoardColumnOrmEntity } from '../modules/crm/boards/infra/board-column.orm-entity.js';
 import { TaskOrmEntity } from '../modules/crm/tasks/infra/task.orm-entity.js';
+import { EmployeeOrmEntity } from '../modules/hr/employees/infra/employee.orm-entity.js';
+import { EmploymentHistoryOrmEntity } from '../modules/hr/employees/infra/employment-history.orm-entity.js';
+import { LeaveRequestOrmEntity } from '../modules/hr/leaves/infra/leave-request.orm-entity.js';
 
 export async function runSeed() {
   await AppDataSource.initialize();
@@ -29,6 +32,13 @@ export async function runSeed() {
     BoardColumnOrmEntity,
   );
   const taskRepository = AppDataSource.getRepository(TaskOrmEntity);
+  const employeeRepository = AppDataSource.getRepository(EmployeeOrmEntity);
+  const employmentHistoryRepository = AppDataSource.getRepository(
+    EmploymentHistoryOrmEntity,
+  );
+  const leaveRequestRepository = AppDataSource.getRepository(
+    LeaveRequestOrmEntity,
+  );
 
   let company = await companyRepository.findOne({
     where: { name: 'Dev Company' },
@@ -45,6 +55,7 @@ export async function runSeed() {
     { key: 'boards', name: 'Boards', visibility: 'public', isActive: true },
     { key: 'tasks', name: 'Tasks', visibility: 'public', isActive: true },
     { key: 'comments', name: 'Comments', visibility: 'public', isActive: true },
+    { key: 'hr', name: 'Human Resources', visibility: 'public', isActive: true },
   ];
 
   const moduleMap = new Map<string, ModuleOrmEntity>();
@@ -70,6 +81,14 @@ export async function runSeed() {
     boards: ['read'],
     tasks: ['create', 'read', 'update', 'move', 'delete', 'comment'],
     comments: ['create', 'read'],
+    hr: [
+      'employees.read',
+      'employees.create',
+      'employees.update',
+      'employees.terminate',
+      'leaves.read',
+      'leaves.manage',
+    ],
   };
 
   const permissionMap = new Map<string, PermissionOrmEntity>();
@@ -107,6 +126,12 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
+        'hr:employees.read',
+        'hr:employees.create',
+        'hr:employees.update',
+        'hr:employees.terminate',
+        'hr:leaves.read',
+        'hr:leaves.manage',
       ],
     },
     {
@@ -122,6 +147,8 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
+        'hr:employees.read',
+        'hr:leaves.read',
       ],
     },
     {
@@ -157,6 +184,18 @@ export async function runSeed() {
       name: 'Viewer',
       description: 'Read-only',
       permissions: ['projects:read', 'boards:read', 'tasks:read', 'comments:read'],
+    },
+    {
+      name: 'HR Manager',
+      description: 'Manage employees and leaves',
+      permissions: [
+        'hr:employees.read',
+        'hr:employees.create',
+        'hr:employees.update',
+        'hr:employees.terminate',
+        'hr:leaves.read',
+        'hr:leaves.manage',
+      ],
     },
   ];
 
@@ -305,6 +344,73 @@ export async function runSeed() {
       });
       await taskRepository.save(entity);
     }
+  }
+
+  let employee = await employeeRepository.findOne({
+    where: { companyId: company.id, email: 'jane.doe@example.com' },
+  });
+  if (!employee) {
+    employee = employeeRepository.create({
+      companyId: company.id,
+      userId: null,
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane.doe@example.com',
+      position: 'HR Specialist',
+      department: 'Human Resources',
+      hireDate: new Date('2022-01-15'),
+      terminationDate: null,
+      status: 'hired',
+    });
+    employee = await employeeRepository.save(employee);
+  }
+
+  const existingHistory = await employmentHistoryRepository.findOne({
+    where: {
+      companyId: company.id,
+      employeeId: employee.id,
+      status: 'hired',
+    },
+  });
+  if (!existingHistory) {
+    await employmentHistoryRepository.save(
+      employmentHistoryRepository.create({
+        companyId: company.id,
+        employeeId: employee.id,
+        status: 'hired',
+        effectiveDate: new Date('2022-01-15'),
+        notes: 'Initial hiring',
+        changedBy: user.id,
+      }),
+    );
+  }
+
+  const leaveStart = new Date('2023-07-01');
+  const leaveEnd = new Date('2023-07-10');
+  const existingLeave = await leaveRequestRepository.findOne({
+    where: {
+      companyId: company.id,
+      employeeId: employee.id,
+      startDate: leaveStart,
+      endDate: leaveEnd,
+      type: 'vacation',
+    },
+  });
+  if (!existingLeave) {
+    await leaveRequestRepository.save(
+      leaveRequestRepository.create({
+        companyId: company.id,
+        employeeId: employee.id,
+        requestedBy: user.id,
+        type: 'vacation',
+        status: 'pending',
+        startDate: leaveStart,
+        endDate: leaveEnd,
+        reason: 'Summer vacation',
+        approvedBy: null,
+        decidedAt: null,
+      }),
+    );
   }
 
   await AppDataSource.destroy();
