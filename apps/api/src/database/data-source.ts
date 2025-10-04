@@ -27,4 +27,7 @@ export const AppDataSource = new DataSource({
     join(__dirname, '..', 'modules', '**', '*.orm-entity.{ts,js}'),
   ],
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+  ssl: env.DATABASE_SSL
+    ? { rejectUnauthorized: env.DATABASE_SSL_REJECT_UNAUTHORIZED }
+    : false,
 });

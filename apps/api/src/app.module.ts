@@ -24,6 +24,9 @@ import { HrModule } from './modules/hr/hr.module.js';
         database: config.get('DATABASE_NAME'),
         autoLoadEntities: true,
         synchronize: false,
+        ssl: config.get<boolean>('DATABASE_SSL')
+          ? { rejectUnauthorized: config.get<boolean>('DATABASE_SSL_REJECT_UNAUTHORIZED') }
+          : false,
       }),
     }),
     AuthRbacModule,
