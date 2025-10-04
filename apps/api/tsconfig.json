@@ -20,8 +20,9 @@
       "@common/*": ["src/common/*"],
       "@config/*": ["src/config/*"],
       "@modules/*": ["src/modules/*"],
-      "argon2": ["src/shims/argon2.ts"] 
-    }
+      "argon2": ["src/shims/argon2.ts"]
+    },
+    "moduleSuffixes": [".ts", ""]
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
