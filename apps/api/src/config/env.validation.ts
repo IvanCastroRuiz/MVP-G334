@@ -16,6 +16,8 @@ export const envSchema = z.object({
   RATE_LIMIT_POINTS: z.string().default('100'),
   RATE_LIMIT_DURATION: z.string().default('60'),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
+  DATABASE_SSL: z.coerce.boolean().default(false),
+  DATABASE_SSL_REJECT_UNAUTHORIZED: z.coerce.boolean().default(false),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -29,7 +29,10 @@ const __dirname = dirname(__filename);
         autoLoadEntities: true,
         synchronize: false,
         migrations: [join(__dirname, 'database', 'migrations', '*.{ts,js}')],
-      }),
+        ssl: config.get<boolean>('DATABASE_SSL')
+          ? { rejectUnauthorized: config.get<boolean>('DATABASE_SSL_REJECT_UNAUTHORIZED') }
+          : false,
+        }),
     }),
     AuthRbacModule,
     CrmModule,
