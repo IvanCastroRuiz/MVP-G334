@@ -39,18 +39,55 @@ export async function runSeed() {
     company = await companyRepository.save(company);
   }
 
-  const modules = [
-    { key: 'rbac', name: 'RBAC Admin', visibility: 'dev_only', isActive: true },
-    { key: 'projects', name: 'Projects', visibility: 'public', isActive: true },
-    { key: 'boards', name: 'Boards', visibility: 'public', isActive: true },
-    { key: 'tasks', name: 'Tasks', visibility: 'public', isActive: true },
-    { key: 'comments', name: 'Comments', visibility: 'public', isActive: true },
+  const moduleDefinitions: Array<{
+    key: string;
+    name: string;
+    visibility: 'public' | 'dev_only';
+    isActive: boolean;
+    parentKey: string | null;
+  }> = [
+    {
+      key: 'rbac',
+      name: 'RBAC Admin',
+      visibility: 'dev_only',
+      isActive: true,
+      parentKey: null,
+    },
+    {
+      key: 'projects',
+      name: 'Projects',
+      visibility: 'public',
+      isActive: true,
+      parentKey: null,
+    },
+    {
+      key: 'boards',
+      name: 'Boards',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'projects',
+    },
+    {
+      key: 'tasks',
+      name: 'Tasks',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'boards',
+    },
+    {
+      key: 'comments',
+      name: 'Comments',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'tasks',
+    },
   ];
 
   const moduleMap = new Map<string, ModuleOrmEntity>();
 
-  for (const module of modules) {
+  for (const module of moduleDefinitions) {
     let existing = await moduleRepository.findOne({ where: { key: module.key } });
+    const parent = module.parentKey ? moduleMap.get(module.parentKey) : undefined;
     if (!existing) {
       existing = moduleRepository.create({
         key: module.key,
@@ -58,8 +95,15 @@ export async function runSeed() {
         visibility: module.visibility as 'public' | 'dev_only',
         isActive: module.isActive,
         companyId: null,
+        parentId: parent?.id ?? null,
       });
       existing = await moduleRepository.save(existing);
+    } else {
+      const expectedParentId = parent?.id ?? null;
+      if (existing.parentId !== expectedParentId) {
+        existing.parentId = expectedParentId;
+        existing = await moduleRepository.save(existing);
+      }
     }
     moduleMap.set(module.key, existing);
   }
