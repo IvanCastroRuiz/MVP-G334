@@ -1,5 +1,5 @@
 import { AppDataSource } from './data-source.js';
-import * as argon2 from 'argon2';
+import { hash as argon2Hash, verify as argon2Verify } from '@node-rs/argon2';
 import { CompanyOrmEntity } from '../modules/auth-rbac/infra/typeorm/company.orm-entity.js';
 import { ModuleOrmEntity } from '../modules/auth-rbac/infra/typeorm/module.orm-entity.js';
 import { PermissionOrmEntity } from '../modules/auth-rbac/infra/typeorm/permission.orm-entity.js';
@@ -203,7 +203,7 @@ export async function runSeed() {
       companyId: company.id,
       email: 'devadmin@example.com',
       name: 'Dev Admin',
-      passwordHash: await argon2.hash('DevAdmin123!'),
+      passwordHash: await argon2Hash('DevAdmin123!'),
     });
     user = await userRepository.save(user);
   }

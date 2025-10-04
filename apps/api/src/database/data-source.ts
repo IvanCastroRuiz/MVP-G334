@@ -1,11 +1,15 @@
 import 'reflect-metadata';
+import 'dotenv/config'; // o usa tsx --env-file; cualquiera de las dos
 import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
-import { envSchema } from '../config/env.validation.js';
-import { join } from 'path';
+import { envSchema } from '../config/env.validation.js'; // en ESM apunta a .js
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-config({ path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env' });
+// __dirname / __filename para ESM:
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
+// Valida variables de entorno
 const env = envSchema.parse(process.env);
 
 export const AppDataSource = new DataSource({
@@ -19,8 +23,8 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: false,
   entities: [
-    join(__dirname, '../modules/**/*.entity.{ts,js}'),
-    join(__dirname, '../modules/**/*.orm-entity.{ts,js}'),
+    join(__dirname, '..', 'modules', '**', '*.entity.{ts,js}'),
+    join(__dirname, '..', 'modules', '**', '*.orm-entity.{ts,js}'),
   ],
-  migrations: [join(__dirname, './migrations/*.{ts,js}')],
+  migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 });
