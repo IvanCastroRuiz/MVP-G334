@@ -14,6 +14,13 @@ export interface AuthProfileDto {
   email: string;
   name: string;
   permissions: string[];
+  roles: string[];
+}
+
+export interface AuthLoginDto {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthProfileDto;
 }
 
 export interface BoardSummaryDto {
