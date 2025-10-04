@@ -1,0 +1,67 @@
+### Login
+POST http://localhost:3000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "devadmin@example.com",
+  "password": "DevAdmin123!"
+}
+
+### Refresh
+POST http://localhost:3000/api/v1/auth/refresh
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Get Profile
+GET http://localhost:3000/api/v1/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Get Modules
+GET http://localhost:3000/api/v1/auth/me/modules
+Authorization: Bearer {{accessToken}}
+
+### List Roles
+GET http://localhost:3000/api/v1/auth/roles
+Authorization: Bearer {{accessToken}}
+
+### List Boards
+GET http://localhost:3000/api/v1/kanban/boards
+Authorization: Bearer {{accessToken}}
+
+### Board Details
+GET http://localhost:3000/api/v1/kanban/boards/{{boardId}}
+Authorization: Bearer {{accessToken}}
+
+### Create Task
+POST http://localhost:3000/api/v1/kanban/tasks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "New Task from HTTP",
+  "projectId": "{{projectId}}",
+  "boardId": "{{boardId}}",
+  "boardColumnId": "{{boardColumnId}}"
+}
+
+### Move Task
+POST http://localhost:3000/api/v1/kanban/tasks/{{taskId}}/move
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "boardColumnId": "{{targetColumnId}}"
+}
+
+### Comment Task
+POST http://localhost:3000/api/v1/kanban/tasks/{{taskId}}/comments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "content": "Progress update"
+}

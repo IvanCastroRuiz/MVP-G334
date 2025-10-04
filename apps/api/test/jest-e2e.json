@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../",
+  "testRegex": ".*.e2e-spec.ts$",
+  "transform": {
+    "^.+\\.ts$": "ts-jest"
+  },
+  "setupFilesAfterEnv": ["<rootDir>/test/setup-e2e.ts"],
+  "testEnvironment": "node"
+}

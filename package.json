@@ -1,0 +1,13 @@
+{
+  "name": "mvp-crm-rbac-kanban",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "migrate:run": "pnpm --filter api migrate:run",
+    "migrate:revert": "pnpm --filter api migrate:revert",
+    "migrate:gen": "pnpm --filter api migrate:gen",
+    "seed": "pnpm --filter api seed"
+  }
+}

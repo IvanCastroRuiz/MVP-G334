@@ -1,0 +1,38 @@
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { TaskCommentsService } from '../../application/services/task-comments.service.js';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard.js';
+import { RbacGuard } from '@common/guards/rbac.guard.js';
+import { Permissions } from '@common/decorators/permissions.decorator.js';
+import { IsString } from 'class-validator';
+
+class CreateCommentRequest {
+  @IsString()
+  content!: string;
+}
+
+@Controller('kanban/tasks/:taskId/comments')
+@UseGuards(JwtAuthGuard, RbacGuard)
+export class TaskCommentsController {
+  constructor(private readonly commentsService: TaskCommentsService) {}
+
+  @Get()
+  @Permissions('tasks:read')
+  async getComments(@Req() req: any, @Param('taskId') taskId: string) {
+    return this.commentsService.getTaskComments(req.user.companyId, taskId);
+  }
+
+  @Post()
+  @Permissions('tasks:comment')
+  async addComment(
+    @Req() req: any,
+    @Param('taskId') taskId: string,
+    @Body() body: CreateCommentRequest,
+  ) {
+    return this.commentsService.addComment(
+      req.user.companyId,
+      req.user.userId,
+      taskId,
+      body.content,
+    );
+  }
+}
