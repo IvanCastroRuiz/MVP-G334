@@ -4,6 +4,7 @@ import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -35,6 +36,8 @@ async function bootstrap() {
   });
 
   const port = Number(configService.get<string>('API_PORT', '3000'));
+  const dataSource = app.get(DataSource);
+  await dataSource.runMigrations();
   await app.listen(port);
 }
 
