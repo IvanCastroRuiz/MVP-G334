@@ -1,0 +1,166 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import type { BoardDetailsDto, BoardSummaryDto } from '@mvp/shared';
+import { TasksService } from '../../application/services/tasks.service.js';
+import { JwtAuthGuard } from '@common/guards/jwt-auth.guard.js';
+import { Permissions } from '@common/decorators/permissions.decorator.js';
+import { RbacGuard } from '@common/guards/rbac.guard.js';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsIn,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateTaskInput } from '../../application/dto/create-task.dto.js';
+import { UpdateTaskInput } from '../../application/dto/update-task.dto.js';
+import { MoveTaskInput } from '../../application/dto/move-task.dto.js';
+
+class CreateTaskRequest {
+  @IsString()
+  title!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsUUID()
+  projectId!: string;
+
+  @IsUUID()
+  boardId!: string;
+
+  @IsUUID()
+  boardColumnId!: string;
+
+  @IsOptional()
+  @IsUUID()
+  assignedTo?: string;
+
+  @IsOptional()
+  @IsIn(['low', 'medium', 'high', 'critical'])
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+
+  @IsOptional()
+  @Type(() => Date)
+  dueDate?: Date;
+}
+
+class UpdateTaskRequest {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsIn(['low', 'medium', 'high', 'critical'])
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+
+  @IsOptional()
+  @IsUUID()
+  assignedTo?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  dueDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
+
+class MoveTaskRequest {
+  @IsUUID()
+  boardColumnId!: string;
+}
+
+@Controller('kanban')
+@UseGuards(JwtAuthGuard, RbacGuard)
+export class TasksController {
+  constructor(private readonly tasksService: TasksService) {}
+
+  @Get('boards')
+  @Permissions('boards:read')
+  async listBoards(@Req() req: any): Promise<BoardSummaryDto[]> {
+    return this.tasksService.listBoards(req.user.companyId);
+  }
+
+  @Get('boards/:boardId')
+  @Permissions('boards:read')
+  async getBoard(
+    @Req() req: any,
+    @Param('boardId') boardId: string,
+  ): Promise<BoardDetailsDto> {
+    return this.tasksService.getBoard(req.user.companyId, boardId);
+  }
+
+  @Post('tasks')
+  @Permissions('tasks:create')
+  async createTask(@Req() req: any, @Body() body: CreateTaskRequest) {
+    const input = new CreateTaskInput(
+      body.title,
+      body.description ?? null,
+      body.projectId,
+      body.boardId,
+      body.boardColumnId,
+      body.assignedTo ?? null,
+      (body.priority ?? 'medium') as 'low' | 'medium' | 'high' | 'critical',
+      body.dueDate ?? null,
+    );
+    return this.tasksService.createTask(
+      req.user.companyId,
+      req.user.userId,
+      input,
+    );
+  }
+
+  @Patch('tasks/:taskId')
+  @Permissions('tasks:update')
+  async updateTask(
+    @Req() req: any,
+    @Param('taskId') taskId: string,
+    @Body() body: UpdateTaskRequest,
+  ) {
+    const input = new UpdateTaskInput(
+      body.title,
+      body.description,
+      body.priority,
+      body.assignedTo,
+      body.dueDate ?? null,
+      body.status,
+    );
+    return this.tasksService.updateTask(
+      req.user.companyId,
+      req.user.userId,
+      taskId,
+      input,
+    );
+  }
+
+  @Post('tasks/:taskId/move')
+  @Permissions('tasks:move')
+  async moveTask(
+    @Req() req: any,
+    @Param('taskId') taskId: string,
+    @Body() body: MoveTaskRequest,
+  ) {
+    const input = new MoveTaskInput(body.boardColumnId);
+    return this.tasksService.moveTask(
+      req.user.companyId,
+      req.user.userId,
+      taskId,
+      input,
+    );
+  }
+}
