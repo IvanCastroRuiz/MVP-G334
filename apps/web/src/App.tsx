@@ -5,12 +5,21 @@ import type { ModuleSummaryDto } from '@mvp/shared';
 import { useAuthStore } from './store/auth-store';
 import LoginPage from './pages/login';
 import KanbanBoardPage from './pages/kanban-board';
-import HrDashboardPage from './pages/hr';
+import HrEmployeesPage from './pages/hr-employees';
+import HrLeavesPage from './pages/hr-leaves';
+import HrAccessPage from './pages/hr-access';
 import { ProtectedRoute } from './components/protected-route';
 
 type ModuleTreeNode = ModuleSummaryDto & { children?: ModuleTreeNode[] };
 
-const getModulePath = (key: string): string => (key === 'boards' ? '/board' : `/${key}`);
+const modulePathMap: Record<string, string> = {
+  boards: '/board',
+  'hr-employees': '/hr/employees',
+  'hr-leaves': '/hr/leaves',
+  'hr-access': '/hr/access',
+};
+
+const getModulePath = (key: string): string => modulePathMap[key] ?? `/${key}`;
 
 const isModuleActive = (module: ModuleTreeNode, path: string): boolean => {
   const modulePath = getModulePath(module.key);
@@ -236,7 +245,10 @@ function AppLayout() {
         <Routes>
           <Route path="/board" element={<KanbanBoardPage />} />
           <Route path="/board/:boardId" element={<KanbanBoardPage />} />
-          <Route path="/hr" element={<HrDashboardPage />} />
+          <Route path="/hr" element={<Navigate to="/hr/employees" replace />} />
+          <Route path="/hr/employees" element={<HrEmployeesPage />} />
+          <Route path="/hr/leaves" element={<HrLeavesPage />} />
+          <Route path="/hr/access" element={<HrAccessPage />} />
           <Route path="*" element={<Navigate to="/board" replace />} />
         </Routes>
       </main>

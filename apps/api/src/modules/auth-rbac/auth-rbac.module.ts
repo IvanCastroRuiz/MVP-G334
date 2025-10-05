@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './ui/controllers/auth.controller.js';
+import { UsersController } from './ui/controllers/users.controller.js';
 import { AuthService } from './application/services/auth.service.js';
 import { UsersRepository } from './infra/typeorm/users.repository.js';
 import { UserOrmEntity } from './infra/typeorm/user.orm-entity.js';
@@ -22,6 +23,7 @@ import { AuditLogRepository } from './infra/typeorm/audit-log.repository.js';
 import { TokenService } from './application/services/token.service.js';
 import { JwtStrategy } from './infra/jwt.strategy.js';
 import { PermissionsService } from './application/services/permissions.service.js';
+import { UsersService } from './application/services/users.service.js';
 import {
   AUDIT_LOG_REPOSITORY,
   MODULES_REPOSITORY,
@@ -56,9 +58,10 @@ import {
       AuditLogOrmEntity,
     ]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UsersController],
   providers: [
     AuthService,
+    UsersService,
     UsersRepository,
     RolesRepository,
     ModulesRepository,

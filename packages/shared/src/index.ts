@@ -24,6 +24,25 @@ export interface AuthLoginDto {
   user: AuthProfileDto;
 }
 
+export interface AssignedRoleSummaryDto {
+  id: string;
+  name: string;
+}
+
+export interface CreateAccessUserRequestDto {
+  name: string;
+  email: string;
+  password: string;
+  roles?: string[];
+}
+
+export interface CreateAccessUserResponseDto {
+  userId: string;
+  email: string;
+  name: string;
+  assignedRoles: AssignedRoleSummaryDto[];
+}
+
 export interface BoardSummaryDto {
   id: string;
   name: string;
