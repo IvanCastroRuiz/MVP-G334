@@ -7,6 +7,7 @@ import { UserRoleOrmEntity } from './user-role.orm-entity.js';
 import { RolePermissionOrmEntity } from './role-permission.orm-entity.js';
 import { PermissionOrmEntity } from './permission.orm-entity.js';
 import { ModuleOrmEntity } from './module.orm-entity.js';
+import { expandHrPermissionVariants } from '../../shared/hr-permission-variants.js';
 
 @Injectable()
 export class RolesRepository implements RolesRepositoryPort {
