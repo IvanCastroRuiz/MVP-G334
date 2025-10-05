@@ -9,7 +9,8 @@ type RoleSummary = { id: string; name: string; description: string | null };
 export default function HrAccessPage() {
   const { user } = useAuthStore();
 
-  const canManageAccess = user?.permissions.includes('rbac:read') ?? false;
+  const canManageAccess = user?.permissions.includes('hr-access:read') ?? false;
+  const canCreateAccess = user?.permissions.includes('hr-access:create') ?? false;
 
   const rolesQuery = useQuery<RoleSummary[]>({
     queryKey: ['auth', 'roles'],
@@ -49,6 +50,10 @@ export default function HrAccessPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setFormSuccess(null);
+    if (!canCreateAccess) {
+      setFormError('No tienes permisos para crear accesos de RRHH.');
+      return;
+    }
     if (!form.name || !form.email || !form.password) {
       setFormError('Nombre, correo y contraseña son obligatorios.');
       return;
@@ -81,7 +86,7 @@ export default function HrAccessPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 shadow-lg">
         <h2 className="text-xl font-semibold text-slate-100">Gestión de accesos</h2>
         <p className="mt-2 text-sm text-slate-400">
-          No tienes permisos para gestionar los accesos. Contacta a un administrador para continuar.
+          No tienes permisos para gestionar los accesos de RRHH. Contacta a un administrador para continuar.
         </p>
       </div>
     );
@@ -186,7 +191,7 @@ export default function HrAccessPage() {
             </p>
             {rolesQuery.isError && (
               <p className="mt-1 text-xs text-amber-400">
-                No fue posible cargar los roles disponibles. Ingresa los identificadores manualmente o contacta a un administrador.
+                No fue posible cargar los roles disponibles o no cuentas con permisos de lectura de accesos de RRHH. Ingresa los identificadores manualmente o contacta a un administrador.
               </p>
             )}
           </div>
