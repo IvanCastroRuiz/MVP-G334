@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
+  BoardColumnDto,
   BoardDetailsDto,
   BoardSummaryDto,
-  BoardColumnDto,
-  TaskDto,
   TaskCommentDto,
+  TaskDto,
 } from '@mvp/shared';
 import api from '../api/client';
 import { useAuthStore } from '../store/auth-store';

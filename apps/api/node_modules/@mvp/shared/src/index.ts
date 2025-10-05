@@ -6,6 +6,7 @@ export interface ModuleSummaryDto {
   name: string;
   visibility: ModuleVisibility;
   isActive: boolean;
+  children?: ModuleSummaryDto[];
 }
 
 export interface AuthProfileDto {
