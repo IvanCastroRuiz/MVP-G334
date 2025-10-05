@@ -1,5 +1,6 @@
 import { FormEvent, useState, type ChangeEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import type { CreateAccessUserResponseDto } from '@mvp/shared';
 import { createUser } from '../api/auth';
 import api from '../api/client';
 import { useAuthStore } from '../store/auth-store';
@@ -35,10 +36,17 @@ export default function HrAccessPage() {
 
   const createUserMutation = useMutation({
     mutationFn: createUser,
-    onSuccess: () => {
+    onSuccess: (result: CreateAccessUserResponseDto) => {
       setForm({ name: '', email: '', password: '', confirmPassword: '', roles: [] });
       setFormError(null);
-      setFormSuccess('El usuario fue creado correctamente. Comparte las credenciales de acceso de forma segura.');
+      const assignedRoleNames = result.assignedRoles.map((role) => role.name);
+      const rolesMessage =
+        assignedRoleNames.length > 0
+          ? `Se asignaron los roles: ${assignedRoleNames.join(', ')}.`
+          : 'No se asignaron roles inicialmente.';
+      setFormSuccess(
+        `El usuario ${result.name} (${result.email}) fue creado correctamente. ${rolesMessage} Comparte las credenciales de acceso de forma segura.`,
+      );
     },
   });
 

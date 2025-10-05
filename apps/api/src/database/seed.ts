@@ -184,6 +184,31 @@ export async function runSeed() {
     }
   }
 
+  const adminPermissions = [
+    'projects:read',
+    'boards:read',
+    'tasks:create',
+    'tasks:read',
+    'tasks:update',
+    'tasks:move',
+    'tasks:comment',
+    'comments:create',
+    'comments:read',
+    'hr-employees:read',
+    'hr-employees:create',
+    'hr-employees:update',
+    'hr-employees:terminate',
+    'hr-leaves:read',
+    'hr-leaves:request',
+    'hr-leaves:manage',
+    'hr-access:read',
+    'hr-access:update',
+    'hr-access:delete',
+  ];
+  if (!adminPermissions.includes('hr-access:create')) {
+    adminPermissions.push('hr-access:create');
+  }
+
   const roles = [
     {
       name: 'DevAdmin',
@@ -216,28 +241,7 @@ export async function runSeed() {
     {
       name: 'Admin',
       description: 'Manage boards and tasks',
-      permissions: [
-        'projects:read',
-        'boards:read',
-        'tasks:create',
-        'tasks:read',
-        'tasks:update',
-        'tasks:move',
-        'tasks:comment',
-        'comments:create',
-        'comments:read',
-        'hr-employees:read',
-        'hr-employees:create',
-        'hr-employees:update',
-        'hr-employees:terminate',
-        'hr-leaves:read',
-        'hr-leaves:request',
-        'hr-leaves:manage',
-        'hr-access:read',
-        'hr-access:create',
-        'hr-access:update',
-        'hr-access:delete',
-      ],
+      permissions: adminPermissions,
     },
     {
       name: 'Manager',
