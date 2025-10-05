@@ -27,7 +27,12 @@ export default function LoginPage() {
 
       const modulesResponse = await api.get('/auth/me/modules');
       const modules = modulesResponse.data as ModuleSummaryDto[];
-      setModules(modules);
+      const normalizeModules = (moduleList: ModuleSummaryDto[]): ModuleSummaryDto[] =>
+        moduleList.map((module) => ({
+          ...module,
+          children: module.children ? normalizeModules(module.children) : undefined,
+        }));
+      setModules(normalizeModules(modules));
 
       const accessibleModules = modules.filter((module) => module.isActive);
       const hasBoardsAccess = response.data.user.permissions.includes('boards:read');
