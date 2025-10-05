@@ -100,10 +100,6 @@ export class ModulesRepository implements ModulesRepositoryPort {
   }
 
   async ensureSeedData(): Promise<void> {
-    const existing = await this.repository.count();
-    if (existing > 0) {
-      return;
-    }
     const definitions: Array<{
       key: string;
       name: string;
@@ -146,22 +142,91 @@ export class ModulesRepository implements ModulesRepositoryPort {
         isActive: true,
         parentKey: 'tasks',
       },
+      {
+        key: 'hr',
+        name: 'Human Resources',
+        visibility: 'public',
+        isActive: true,
+        parentKey: null,
+      },
+      {
+        key: 'hr-employees',
+        name: 'Colaboradores',
+        visibility: 'public',
+        isActive: true,
+        parentKey: 'hr',
+      },
+      {
+        key: 'hr-leaves',
+        name: 'Licencias y permisos',
+        visibility: 'public',
+        isActive: true,
+        parentKey: 'hr',
+      },
+      {
+        key: 'hr-access',
+        name: 'Gestión de accesos',
+        visibility: 'public',
+        isActive: true,
+        parentKey: 'hr',
+      },
     ];
 
-    const createdByKey = new Map<string, ModuleOrmEntity>();
+    const existingModules = await this.repository.find({
+      where: {
+        key: In(definitions.map((definition) => definition.key)),
+        companyId: IsNull(),
+      },
+    });
+
+    const moduleByKey = new Map<string, ModuleOrmEntity>();
+    for (const module of existingModules) {
+      moduleByKey.set(module.key, module);
+    }
 
     for (const definition of definitions) {
-      const module = this.repository.create({
-        key: definition.key,
-        name: definition.name,
-        visibility: definition.visibility,
-        isActive: definition.isActive,
-        parentId: definition.parentKey
-          ? createdByKey.get(definition.parentKey)!.id
-          : null,
-      });
+      const parent = definition.parentKey
+        ? moduleByKey.get(definition.parentKey)
+        : undefined;
+
+      let module = moduleByKey.get(definition.key);
+      if (!module) {
+        module = this.repository.create({
+          key: definition.key,
+          name: definition.name,
+          visibility: definition.visibility,
+          isActive: definition.isActive,
+          parentId: parent?.id ?? null,
+          companyId: null,
+        });
+      } else {
+        let shouldPersist = false;
+        const expectedParentId = parent?.id ?? null;
+        if (module.parentId !== expectedParentId) {
+          module.parentId = expectedParentId;
+          shouldPersist = true;
+        }
+        if (module.name !== definition.name) {
+          module.name = definition.name;
+          shouldPersist = true;
+        }
+        if (module.visibility !== definition.visibility) {
+          module.visibility = definition.visibility;
+          shouldPersist = true;
+        }
+        if (module.isActive !== definition.isActive) {
+          module.isActive = definition.isActive;
+          shouldPersist = true;
+        }
+
+        if (!shouldPersist) {
+          moduleByKey.set(definition.key, module);
+          continue;
+        }
+      }
+
       const saved = await this.repository.save(module);
-      createdByKey.set(definition.key, saved);
+      moduleByKey.set(definition.key, saved);
     }
   }
 }
