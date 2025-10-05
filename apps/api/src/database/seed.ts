@@ -140,7 +140,7 @@ export async function runSeed() {
   }
 
   const permissionsByModule: Record<string, string[]> = {
-    rbac: ['read'],
+    rbac: ['read', 'manage_access'],
     projects: ['read'],
     boards: ['read'],
     tasks: ['create', 'read', 'update', 'move', 'delete', 'comment'],
@@ -181,6 +181,7 @@ export async function runSeed() {
       description: 'Full access',
       permissions: [
         'rbac:read',
+        'rbac:manage_access',
         'projects:read',
         'boards:read',
         'tasks:create',
@@ -204,6 +205,7 @@ export async function runSeed() {
       name: 'Admin',
       description: 'Manage boards and tasks',
       permissions: [
+        'rbac:manage_access',
         'projects:read',
         'boards:read',
         'tasks:create',

@@ -6,6 +6,7 @@ import { useAuthStore } from './store/auth-store';
 import LoginPage from './pages/login';
 import KanbanBoardPage from './pages/kanban-board';
 import HrDashboardPage from './pages/hr';
+import AccessManagementPage from './pages/access';
 import { ProtectedRoute } from './components/protected-route';
 
 type ModuleTreeNode = ModuleSummaryDto & { children?: ModuleTreeNode[] };
@@ -159,7 +160,10 @@ function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const hasRbacAccess = user?.permissions.includes('rbac:read') ?? false;
+  const hasRbacAccess =
+    user?.permissions.some((permission) =>
+      ['rbac:read', 'rbac:manage_access'].includes(permission),
+    ) ?? false;
 
   const visibleModules = useMemo<ModuleTreeNode[]>(() => {
     if (!user) {
@@ -237,6 +241,7 @@ function AppLayout() {
           <Route path="/board" element={<KanbanBoardPage />} />
           <Route path="/board/:boardId" element={<KanbanBoardPage />} />
           <Route path="/hr" element={<HrDashboardPage />} />
+          <Route path="/rbac" element={<AccessManagementPage />} />
           <Route path="*" element={<Navigate to="/board" replace />} />
         </Routes>
       </main>

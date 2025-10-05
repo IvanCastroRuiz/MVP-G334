@@ -31,6 +31,14 @@ export class UsersRepository implements UsersRepositoryPort {
     return entity ? this.toDomain(entity) : null;
   }
 
+  async findAll(companyId: string): Promise<User[]> {
+    const entities = await this.repository.find({
+      where: { companyId },
+      order: { createdAt: 'DESC' },
+    });
+    return entities.map((entity) => this.toDomain(entity));
+  }
+
   async create(user: {
     companyId: string;
     email: string;
