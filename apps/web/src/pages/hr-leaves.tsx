@@ -56,7 +56,7 @@ export default function HrLeavesPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canManageLeaves = user?.permissions.includes('hr:leaves.manage') ?? false;
+  const canManageLeaves = user?.permissions.includes('hr-leaves:manage') ?? false;
 
   const [leaveStatusFilter, setLeaveStatusFilter] = useState<'all' | LeaveRequestStatus>('all');
   const [leaveTypeFilter, setLeaveTypeFilter] = useState<'all' | LeaveType>('all');
