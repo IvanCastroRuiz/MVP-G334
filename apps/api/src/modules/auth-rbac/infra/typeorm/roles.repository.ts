@@ -70,10 +70,24 @@ export class RolesRepository implements RolesRepositoryPort {
       const canonicalPermission = `${moduleKey}:${permission.action}`;
       expandedPermissions.add(canonicalPermission);
 
-      if (moduleKey === 'hr' || moduleKey.startsWith('hr-')) {
-        const variants = expandHrPermissionVariants(canonicalPermission);
-        for (const variant of variants) {
-          expandedPermissions.add(variant);
+      if (moduleKey === 'hr') {
+        // Support legacy HR permissions that used the `hr:submodule.action` pattern by
+        // translating them into the new `hr-submodule:action` format so both the guards
+        // and the module navigation can rely on the updated prefixes without forcing a
+        // reseed of existing databases.
+        const [firstPart, ...rest] = permission.action.split('.');
+        if (firstPart && rest.length > 0) {
+          const normalizedModuleKey = `hr-${firstPart}`;
+          const normalizedAction = rest.join('.');
+          if (normalizedAction.length > 0) {
+            const colonAction = normalizedAction.replace(/\./g, ':');
+            expandedPermissions.add(`${normalizedModuleKey}:${colonAction}`);
+          }
+        } else if (firstPart === 'read') {
+          const legacyHrModules = ['hr-employees', 'hr-leaves'];
+          for (const legacyModule of legacyHrModules) {
+            expandedPermissions.add(`${legacyModule}:read`);
+          }
         }
       }
     }
