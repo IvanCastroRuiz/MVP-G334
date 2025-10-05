@@ -7,6 +7,7 @@ import { UserRoleOrmEntity } from './user-role.orm-entity.js';
 import { RolePermissionOrmEntity } from './role-permission.orm-entity.js';
 import { PermissionOrmEntity } from './permission.orm-entity.js';
 import { ModuleOrmEntity } from './module.orm-entity.js';
+import { expandHrPermissionVariants } from '../../shared/hr-permission-variants.js';
 
 @Injectable()
 export class RolesRepository implements RolesRepositoryPort {
@@ -61,10 +62,23 @@ export class RolesRepository implements RolesRepositoryPort {
       where: { id: In(moduleIds) },
     });
     const moduleMap = new Map(modules.map((module) => [module.id, module.key]));
-    return permissions.map((permission) => {
+
+    const expandedPermissions = new Set<string>();
+
+    for (const permission of permissions) {
       const moduleKey = moduleMap.get(permission.moduleId) ?? permission.moduleId;
-      return `${moduleKey}:${permission.action}`;
-    });
+      const canonicalPermission = `${moduleKey}:${permission.action}`;
+      expandedPermissions.add(canonicalPermission);
+
+      if (moduleKey === 'hr' || moduleKey.startsWith('hr-')) {
+        const variants = expandHrPermissionVariants(canonicalPermission);
+        for (const variant of variants) {
+          expandedPermissions.add(variant);
+        }
+      }
+    }
+
+    return Array.from(expandedPermissions);
   }
 
   async getUserRoles(companyId: string, userId: string): Promise<string[]> {

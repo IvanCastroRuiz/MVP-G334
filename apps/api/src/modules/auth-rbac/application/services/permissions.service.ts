@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { RolesRepositoryPort } from '../ports/roles.repository-port.js';
 import { PermissionsServicePort } from '../ports/permissions.service-port.js';
 import { ROLES_REPOSITORY } from '../ports/port.tokens.js';
+import { expandHrPermissionVariants } from '../../shared/hr-permission-variants.js';
 
 @Injectable()
 export class PermissionsService implements PermissionsServicePort {
@@ -9,6 +10,19 @@ export class PermissionsService implements PermissionsServicePort {
     @Inject(ROLES_REPOSITORY)
     private readonly rolesRepository: RolesRepositoryPort,
   ) {}
+
+  private expandPermissions(permissions: string[]): Set<string> {
+    const expanded = new Set<string>();
+
+    for (const permission of permissions) {
+      expanded.add(permission);
+      for (const variant of expandHrPermissionVariants(permission)) {
+        expanded.add(variant);
+      }
+    }
+
+    return expanded;
+  }
 
   async userHasPermissions(
     companyId: string,
@@ -19,13 +33,22 @@ export class PermissionsService implements PermissionsServicePort {
       companyId,
       userId,
     );
+    const expandedPermissions = this.expandPermissions(userPermissions);
 
-    return permissions.every((permission) =>
-      userPermissions.includes(permission),
-    );
+    return permissions.every((permission) => {
+      if (expandedPermissions.has(permission)) {
+        return true;
+      }
+      const variants = expandHrPermissionVariants(permission);
+      return variants.some((variant) => expandedPermissions.has(variant));
+    });
   }
 
   async getUserPermissions(companyId: string, userId: string): Promise<string[]> {
-    return this.rolesRepository.getUserPermissions(companyId, userId);
+    const userPermissions = await this.rolesRepository.getUserPermissions(
+      companyId,
+      userId,
+    );
+    return Array.from(this.expandPermissions(userPermissions));
   }
 }
