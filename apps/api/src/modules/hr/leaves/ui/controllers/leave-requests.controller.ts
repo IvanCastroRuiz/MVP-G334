@@ -83,7 +83,7 @@ export class LeaveRequestsController {
   ) {}
 
   @Get()
-  @Permissions('hr:leaves.read')
+  @Permissions('hr-leaves:read')
   async listLeaves(
     @Req() req: any,
     @Query() query: ListLeavesQuery,
@@ -96,7 +96,7 @@ export class LeaveRequestsController {
   }
 
   @Post()
-  @Permissions('hr:leaves.manage')
+  @Permissions('hr-leaves:manage')
   async createLeave(
     @Req() req: any,
     @Body() body: CreateLeaveRequestBody,
@@ -116,7 +116,7 @@ export class LeaveRequestsController {
   }
 
   @Patch(':leaveId/approve')
-  @Permissions('hr:leaves.manage')
+  @Permissions('hr-leaves:manage')
   async approveLeave(
     @Req() req: any,
     @Param('leaveId') leaveId: string,
@@ -132,7 +132,7 @@ export class LeaveRequestsController {
   }
 
   @Patch(':leaveId/reject')
-  @Permissions('hr:leaves.manage')
+  @Permissions('hr-leaves:manage')
   async rejectLeave(
     @Req() req: any,
     @Param('leaveId') leaveId: string,

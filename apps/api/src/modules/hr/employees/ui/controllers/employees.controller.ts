@@ -129,7 +129,7 @@ export class EmployeesController {
   constructor(@Inject(EmployeesService) private readonly employeesService: EmployeesService) {}
 
   @Get()
-  @Permissions('hr:employees.read')
+  @Permissions('hr-employees:read')
   async listEmployees(
     @Req() req: any,
     @Query() query: ListEmployeesQuery,
@@ -142,7 +142,7 @@ export class EmployeesController {
   }
 
   @Post()
-  @Permissions('hr:employees.create')
+  @Permissions('hr-employees:create')
   async createEmployee(
     @Req() req: any,
     @Body() body: CreateEmployeeRequest,
@@ -165,7 +165,7 @@ export class EmployeesController {
   }
 
   @Get(':employeeId')
-  @Permissions('hr:employees.read')
+  @Permissions('hr-employees:read')
   async getEmployee(
     @Req() req: any,
     @Param('employeeId') employeeId: string,
@@ -178,7 +178,7 @@ export class EmployeesController {
   }
 
   @Patch(':employeeId')
-  @Permissions('hr:employees.update')
+  @Permissions('hr-employees:update')
   async updateEmployee(
     @Req() req: any,
     @Param('employeeId') employeeId: string,
@@ -201,7 +201,7 @@ export class EmployeesController {
   }
 
   @Post(':employeeId/terminate')
-  @Permissions('hr:employees.terminate')
+  @Permissions('hr-employees:terminate')
   async terminateEmployee(
     @Req() req: any,
     @Param('employeeId') employeeId: string,
@@ -217,7 +217,7 @@ export class EmployeesController {
   }
 
   @Post(':employeeId/reactivate')
-  @Permissions('hr:employees.update')
+  @Permissions('hr-employees:update')
   async reactivateEmployee(
     @Req() req: any,
     @Param('employeeId') employeeId: string,
