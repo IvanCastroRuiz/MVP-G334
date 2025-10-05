@@ -100,14 +100,21 @@ export async function runSeed() {
     },
     {
       key: 'hr-employees',
-      name: 'Employees',
+      name: 'Colaboradores',
       visibility: 'public',
       isActive: true,
       parentKey: 'hr',
     },
     {
       key: 'hr-leaves',
-      name: 'Leave Management',
+      name: 'Licencias y permisos',
+      visibility: 'public',
+      isActive: true,
+      parentKey: 'hr',
+    },
+    {
+      key: 'hr-access',
+      name: 'Gestión de accesos',
       visibility: 'public',
       isActive: true,
       parentKey: 'hr',
@@ -131,8 +138,16 @@ export async function runSeed() {
       existing = await moduleRepository.save(existing);
     } else {
       const expectedParentId = parent?.id ?? null;
+      let shouldSave = false;
       if (existing.parentId !== expectedParentId) {
         existing.parentId = expectedParentId;
+        shouldSave = true;
+      }
+      if (existing.name !== module.name) {
+        existing.name = module.name;
+        shouldSave = true;
+      }
+      if (shouldSave) {
         existing = await moduleRepository.save(existing);
       }
     }
@@ -145,15 +160,9 @@ export async function runSeed() {
     boards: ['read'],
     tasks: ['create', 'read', 'update', 'move', 'delete', 'comment'],
     comments: ['create', 'read'],
-    hr: [
-      'employees.read',
-      'employees.create',
-      'employees.update',
-      'employees.terminate',
-      'leaves.read',
-      'leaves.request',
-      'leaves.manage',
-    ],
+    'hr-employees': ['read', 'create', 'update', 'terminate'],
+    'hr-leaves': ['read', 'request', 'manage'],
+    'hr-access': ['read', 'create', 'update', 'delete'],
   };
 
   const permissionMap = new Map<string, PermissionOrmEntity>();
@@ -191,13 +200,17 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
-        'hr:employees.read',
-        'hr:employees.create',
-        'hr:employees.update',
-        'hr:employees.terminate',
-        'hr:leaves.read',
-        'hr:leaves.request',
-        'hr:leaves.manage',
+        'hr-employees:read',
+        'hr-employees:create',
+        'hr-employees:update',
+        'hr-employees:terminate',
+        'hr-leaves:read',
+        'hr-leaves:request',
+        'hr-leaves:manage',
+        'hr-access:read',
+        'hr-access:create',
+        'hr-access:update',
+        'hr-access:delete',
       ],
     },
     {
@@ -213,13 +226,17 @@ export async function runSeed() {
         'tasks:comment',
         'comments:create',
         'comments:read',
-        'hr:employees.read',
-        'hr:employees.create',
-        'hr:employees.update',
-        'hr:employees.terminate',
-        'hr:leaves.read',
-        'hr:leaves.request',
-        'hr:leaves.manage',
+        'hr-employees:read',
+        'hr-employees:create',
+        'hr-employees:update',
+        'hr-employees:terminate',
+        'hr-leaves:read',
+        'hr-leaves:request',
+        'hr-leaves:manage',
+        'hr-access:read',
+        'hr-access:create',
+        'hr-access:update',
+        'hr-access:delete',
       ],
     },
     {
@@ -259,13 +276,13 @@ export async function runSeed() {
         'boards:read',
         'tasks:read',
         'comments:read',
-        'hr:employees.read',
-        'hr:employees.create',
-        'hr:employees.update',
-        'hr:employees.terminate',
-        'hr:leaves.read',
-        'hr:leaves.request',
-        'hr:leaves.manage',
+        'hr-employees:read',
+        'hr-employees:create',
+        'hr-employees:update',
+        'hr-employees:terminate',
+        'hr-leaves:read',
+        'hr-leaves:request',
+        'hr-leaves:manage',
       ],
     },
     {
@@ -277,12 +294,12 @@ export async function runSeed() {
       name: 'HR Manager',
       description: 'Manage employees and leaves',
       permissions: [
-        'hr:employees.read',
-        'hr:employees.create',
-        'hr:employees.update',
-        'hr:employees.terminate',
-        'hr:leaves.read',
-        'hr:leaves.manage',
+        'hr-employees:read',
+        'hr-employees:create',
+        'hr-employees:update',
+        'hr-employees:terminate',
+        'hr-leaves:read',
+        'hr-leaves:manage',
       ],
     },
   ];
