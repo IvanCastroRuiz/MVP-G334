@@ -61,10 +61,37 @@ export class RolesRepository implements RolesRepositoryPort {
       where: { id: In(moduleIds) },
     });
     const moduleMap = new Map(modules.map((module) => [module.id, module.key]));
-    return permissions.map((permission) => {
+
+    const expandedPermissions = new Set<string>();
+
+    for (const permission of permissions) {
       const moduleKey = moduleMap.get(permission.moduleId) ?? permission.moduleId;
-      return `${moduleKey}:${permission.action}`;
-    });
+      const canonicalPermission = `${moduleKey}:${permission.action}`;
+      expandedPermissions.add(canonicalPermission);
+
+      if (moduleKey === 'hr') {
+        // Support legacy HR permissions that used the `hr:submodule.action` pattern by
+        // translating them into the new `hr-submodule:action` format so both the guards
+        // and the module navigation can rely on the updated prefixes without forcing a
+        // reseed of existing databases.
+        const [firstPart, ...rest] = permission.action.split('.');
+        if (firstPart && rest.length > 0) {
+          const normalizedModuleKey = `hr-${firstPart}`;
+          const normalizedAction = rest.join('.');
+          if (normalizedAction.length > 0) {
+            const colonAction = normalizedAction.replace(/\./g, ':');
+            expandedPermissions.add(`${normalizedModuleKey}:${colonAction}`);
+          }
+        } else if (firstPart === 'read') {
+          const legacyHrModules = ['hr-employees', 'hr-leaves'];
+          for (const legacyModule of legacyHrModules) {
+            expandedPermissions.add(`${legacyModule}:read`);
+          }
+        }
+      }
+    }
+
+    return Array.from(expandedPermissions);
   }
 
   async getUserRoles(companyId: string, userId: string): Promise<string[]> {
