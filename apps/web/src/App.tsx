@@ -5,6 +5,7 @@ import type { ModuleSummaryDto } from '@mvp/shared';
 import { useAuthStore } from './store/auth-store';
 import LoginPage from './pages/login';
 import KanbanBoardPage from './pages/kanban-board';
+import HrDashboardPage from './pages/hr';
 import { ProtectedRoute } from './components/protected-route';
 
 type ModuleTreeNode = ModuleSummaryDto & { children?: ModuleTreeNode[] };
@@ -235,6 +236,7 @@ function AppLayout() {
         <Routes>
           <Route path="/board" element={<KanbanBoardPage />} />
           <Route path="/board/:boardId" element={<KanbanBoardPage />} />
+          <Route path="/hr" element={<HrDashboardPage />} />
           <Route path="*" element={<Navigate to="/board" replace />} />
         </Routes>
       </main>

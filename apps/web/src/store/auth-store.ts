@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, type StateCreator } from 'zustand';
 import type { AuthProfileDto, ModuleSummaryDto } from '@mvp/shared';
 
 interface AuthState {
@@ -17,21 +17,23 @@ const storage = typeof window !== 'undefined' ? window.sessionStorage : null;
 const persistedAccess = storage?.getItem('accessToken') ?? null;
 const persistedRefresh = storage?.getItem('refreshToken') ?? null;
 
-export const useAuthStore = create<AuthState>((set) => ({
+const createAuthStore: StateCreator<AuthState> = (set) => ({
   accessToken: persistedAccess,
   refreshToken: persistedRefresh,
   user: null,
   modules: [],
-  setTokens: (accessToken, refreshToken) => {
+  setTokens: (accessToken: string, refreshToken: string) => {
     storage?.setItem('accessToken', accessToken);
     storage?.setItem('refreshToken', refreshToken);
     set({ accessToken, refreshToken });
   },
-  setUser: (user) => set({ user }),
-  setModules: (modules) => set({ modules }),
+  setUser: (user: AuthProfileDto | null) => set({ user }),
+  setModules: (modules: ModuleSummaryDto[]) => set({ modules }),
   clear: () => {
     storage?.removeItem('accessToken');
     storage?.removeItem('refreshToken');
     set({ accessToken: null, refreshToken: null, user: null, modules: [] });
   },
-}));
+});
+
+export const useAuthStore = create<AuthState>()(createAuthStore);

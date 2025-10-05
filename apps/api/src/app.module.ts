@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import { AuthRbacModule } from './modules/auth-rbac/auth-rbac.module.js';
 import { CrmModule } from './modules/crm/crm.module.js';
 import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware.js';
+import { HrModule } from './modules/hr/hr.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,6 +37,7 @@ const __dirname = dirname(__filename);
     }),
     AuthRbacModule,
     CrmModule,
+    HrModule,
   ],
 })
 export class AppModule implements NestModule {

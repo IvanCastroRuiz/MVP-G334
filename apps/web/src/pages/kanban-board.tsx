@@ -20,7 +20,7 @@ export default function KanbanBoardPage() {
   const canMoveTasks = user?.permissions.includes('tasks:move');
   const canComment = user?.permissions.includes('tasks:comment');
 
-  const boardsQuery = useQuery({
+  const boardsQuery = useQuery<BoardSummaryDto[]>({
     queryKey: ['boards'],
     queryFn: async () => {
       const response = await api.get('/kanban/boards');
@@ -44,7 +44,7 @@ export default function KanbanBoardPage() {
     }
   }, [boardId, effectiveBoardId, navigate]);
 
-  const boardQuery = useQuery({
+  const boardQuery = useQuery<BoardDetailsDto>({
     queryKey: ['board', effectiveBoardId],
     queryFn: async () => {
       const response = await api.get(`/kanban/boards/${effectiveBoardId}`);
