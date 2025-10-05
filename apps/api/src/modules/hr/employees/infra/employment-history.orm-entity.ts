@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseHrOrmEntity } from '../../shared/infra/base-hr.entity.js';
 import { EmployeeOrmEntity } from './employee.orm-entity.js';
 
@@ -23,5 +23,6 @@ export class EmploymentHistoryOrmEntity extends BaseHrOrmEntity {
   changedBy!: string | null;
 
   @ManyToOne(() => EmployeeOrmEntity, (employee) => employee.history)
+  @JoinColumn({ name: 'employee_id', referencedColumnName: 'id' })
   employee!: EmployeeOrmEntity;
 }
