@@ -63,9 +63,9 @@ export default function HrEmployeesPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canCreateEmployees = user?.permissions.includes('hr:employees.create') ?? false;
-  const canTerminateEmployees = user?.permissions.includes('hr:employees.terminate') ?? false;
-  const canUpdateEmployees = user?.permissions.includes('hr:employees.update') ?? false;
+  const canCreateEmployees = user?.permissions.includes('hr-employees:create') ?? false;
+  const canTerminateEmployees = user?.permissions.includes('hr-employees:terminate') ?? false;
+  const canUpdateEmployees = user?.permissions.includes('hr-employees:update') ?? false;
 
   const [statusFilter, setStatusFilter] = useState<'all' | EmployeeStatus>('hired');
   const [searchTerm, setSearchTerm] = useState('');
